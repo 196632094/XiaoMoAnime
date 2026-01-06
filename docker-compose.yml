@@ -13,10 +13,6 @@ services:
       # Mount local patched omofun.py
       - ./omofun.py:/app/omofun_patched.py
       - ./fantu.py:/app/fantu_patched.py
-      - ./anime1.py:/app/anime1_patched.py
-      - ./app.py:/app/app_patched.py
-      - ./requirements.txt:/app/requirements_patched.txt
-      - ./templates/index.html:/app/templates_index_patched.html
     environment:
       - TZ=Asia/Shanghai
       # 源码下载地址
@@ -26,10 +22,6 @@ services:
       - FORCE_UPDATE_ID=20260103_002
       # Ensure Python doesn't buffer output
       - PYTHONUNBUFFERED=1
-    dns:
-      - 223.5.5.5
-      - 223.6.6.6
-      - 8.8.8.8
     command: >
       /bin/bash -c "
       set -e;
@@ -42,8 +34,8 @@ services:
       echo '1.5. Install System Tools (curl/unzip/ffmpeg)...';
       if ! command -v curl &> /dev/null || ! command -v ffmpeg &> /dev/null; then
           echo 'System tools (curl or ffmpeg) not found, installing...';
-          if [ -f /etc/apt/sources.list.d/debian.sources ]; then sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources; sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources; fi;
-          if [ -f /etc/apt/sources.list ]; then sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; fi;
+          if [ -f /etc/apt/sources.list.d/debian.sources ]; then sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources; fi;
+          if [ -f /etc/apt/sources.list ]; then sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list; fi;
           
           apt-get update;
           apt-get install -y --no-install-recommends curl unzip ffmpeg;
@@ -81,23 +73,6 @@ services:
       if [ -f '/app/fantu_patched.py' ]; then
           echo 'Applying local patch for fantu.py...';
           cp -f /app/fantu_patched.py /app/fantu.py;
-      fi;
-      if [ -f '/app/anime1_patched.py' ]; then
-          echo 'Applying local patch for anime1.py...';
-          cp -f /app/anime1_patched.py /app/anime1.py;
-      fi;
-      if [ -f '/app/app_patched.py' ]; then
-          echo 'Applying local patch for app.py...';
-          cp -f /app/app_patched.py /app/app.py;
-      fi;
-      if [ -f '/app/requirements_patched.txt' ]; then
-          echo 'Applying local patch for requirements.txt...';
-          cp -f /app/requirements_patched.txt /app/requirements.txt;
-      fi;
-      if [ -f '/app/templates_index_patched.html' ]; then
-          echo 'Applying local patch for templates/index.html...';
-          mkdir -p /app/templates;
-          cp -f /app/templates_index_patched.html /app/templates/index.html;
       fi;
 
       echo '4. Conflict Check...';
