@@ -73,7 +73,7 @@ python app.py
 
 容器配置了以下挂载卷，确保数据不会因重启丢失：
 - `./downloads`: 下载的视频文件
-- 如需更改挂载下载目录，修改 `docker-compose.yml` 中的 `xiaomo_data`改为你的存储目录
+- 如需更改挂载下载目录，修改 docker-compose.yml中的 xiaomo_data改为你的存储目录
 - `./logs`: 运行日志
 - `./config`: 配置文件（如 `settings.json`）
 
