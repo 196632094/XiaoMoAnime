@@ -1,110 +1,218 @@
 services:
+
   xiaomo-anime:
+
     image: python:3.9-slim
+
     container_name: xiaomo-anime
+
     restart: unless-stopped
+
     ports:
+
       - "5000:5000"
+
     volumes:
+
       - xiaomo_data:/app/downloads
+
       - xiaomo_logs:/app/logs
+
       - xiaomo_config:/app/config
+
       - xiaomo_libs:/usr/local/lib/python3.9/site-packages
+
       # Mount local patched omofun.py
+
       - ./omofun.py:/app/omofun_patched.py
+
       - ./fantu.py:/app/fantu_patched.py
+
     environment:
+
       - TZ=Asia/Shanghai
+
       # 源码下载地址
+
       - ZIP_URL=https://xxla.iepose.cn/FTP/%E6%B5%8B%E8%AF%95/1/xiaomo-anime-deploy.zip
+
       - DEBIAN_FRONTEND=noninteractive
+
       # Force Restart Trigger (Update this to force recreate)
+
       - FORCE_UPDATE_ID=20260103_002
+
       # Ensure Python doesn't buffer output
+
       - PYTHONUNBUFFERED=1
+
     command: >
+
       /bin/bash -c "
+
       set -e;
+
       echo '=== BOOT START V3 (Persisted Libs) ===';
+
       
+
       echo '1. Environment Check...';
+
       python --version;
+
       pip --version;
+
       
+
       echo '1.5. Install System Tools (curl/unzip/ffmpeg)...';
+
       if ! command -v curl &> /dev/null || ! command -v ffmpeg &> /dev/null; then
+
           echo 'System tools (curl or ffmpeg) not found, installing...';
+
           if [ -f /etc/apt/sources.list.d/debian.sources ]; then sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources; fi;
+
           if [ -f /etc/apt/sources.list ]; then sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list; fi;
+
           
+
           apt-get update;
-          apt-get install -y --no-install-recommends curl unzip ffmpeg;
+
+          apt-get install -y --no-install-recommends curl unzip ffmpeg gcc python3-dev libffi-dev libssl-dev;
+
       fi;
+
       
+
       echo '2. Download/Update Source Code...';
+
       WORKDIR=/app;
+
       cd $$WORKDIR;
+
       if [ ! -z \"$$ZIP_URL\" ]; then
+
           if [ -f 'source.zip' ]; then rm source.zip; fi;
+
           
+
           echo 'Downloading from $$ZIP_URL ...';
+
           curl -f -L -o source.zip \"$$ZIP_URL\" || \
+
           (echo 'Retrying download...' && sleep 3 && curl -f -L -o source.zip \"$$ZIP_URL\") || \
+
           { echo 'Download failed (502 Bad Gateway) - Check URL or Network'; exit 1; };
+
           
+
           unzip -o source.zip;
+
           rm source.zip;
+
       fi;
+
       
+
       echo '3. Handle Nested Directory...';
+
       if [ ! -f 'app.py' ]; then
+
           SUB_DIR=$$(find . -maxdepth 2 -name 'app.py' -exec dirname {} \;);
+
           if [ ! -z \"$$SUB_DIR\" ] && [ \"$$SUB_DIR\" != '.' ]; then
+
               echo \"Moving files from $$SUB_DIR to root...\";
+
               cp -rf \"$$SUB_DIR\"/* . && rm -rf \"$$SUB_DIR\";
+
           fi;
+
       fi;
 
       echo '3.5. Apply Patches...';
+
       if [ -f '/app/omofun_patched.py' ]; then
+
           echo 'Applying local patch for omofun.py...';
+
           cp -f /app/omofun_patched.py /app/omofun.py;
+
       fi;
+
       if [ -f '/app/fantu_patched.py' ]; then
+
           echo 'Applying local patch for fantu.py...';
+
           cp -f /app/fantu_patched.py /app/fantu.py;
+
       fi;
 
       echo '4. Conflict Check...';
+
       if [ -f 'flask.py' ]; then
+
           echo 'CRITICAL WARNING: Found flask.py in application directory. This shadows the Flask library!';
+
           echo 'Renaming flask.py to flask_app_conflict.py.bak';
+
           mv flask.py flask_app_conflict.py.bak;
+
       fi;
+
       if [ -d 'flask' ]; then
+
           echo 'CRITICAL WARNING: Found flask folder in application directory. This might shadow the Flask library!';
+
       fi;
+
       
+
       echo '5. Install Dependencies (Only if missing)...';
+
       if ! python -c 'import flask; import bs4; import m3u8' 2>/dev/null; then
+
           echo 'Missing dependencies detected (flask/bs4/m3u8). Installing...';
+
           pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple;
+
           
-          pip install --no-cache-dir flask flask-socketio eventlet gevent greenlet requests beautifulsoup4 lxml m3u8 pycryptodome;
+
+          pip install --no-cache-dir flask flask-socketio requests beautifulsoup4 lxml m3u8 pycryptodome;
+
           
-          if [ -f 'requirements.txt' ]; then pip install --no-cache-dir -r requirements.txt; fi;
+
+          if [ -f 'requirements.txt' ]; then 
+              sed -i '/eventlet/d' requirements.txt;
+              sed -i '/gevent/d' requirements.txt;
+              pip install --no-cache-dir -r requirements.txt; 
+          fi;
+
       else
+
           echo 'Dependencies already installed in system (Persisted). Skipping download.';
+
       fi;
+
       
+
       echo '6. Start App...';
+
       mkdir -p logs;
+
       echo 'Starting Python Application...';
+
       exec python app.py;
+
       "
 
 volumes:
+
   xiaomo_data:
+
   xiaomo_logs:
+
   xiaomo_config:
+
   xiaomo_libs:
+
