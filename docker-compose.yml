@@ -64,11 +64,11 @@ services:
 
       
 
-      echo '1.5. Install System Tools (curl/unzip/ffmpeg)...';
+      echo '1.5. Install System Tools (curl/unzip/ffmpeg/nodejs/chromium)...';
 
-      if ! command -v curl &> /dev/null || ! command -v ffmpeg &> /dev/null; then
+      if ! command -v curl &> /dev/null || ! command -v ffmpeg &> /dev/null || ! command -v nodejs &> /dev/null || ! command -v chromium &> /dev/null; then
 
-          echo 'System tools (curl or ffmpeg) not found, installing...';
+          echo 'System tools (curl/ffmpeg/nodejs/chromium) not found, installing...';
 
           if [ -f /etc/apt/sources.list.d/debian.sources ]; then sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources; fi;
 
@@ -78,7 +78,7 @@ services:
 
           apt-get update;
 
-          apt-get install -y --no-install-recommends curl unzip ffmpeg gcc python3-dev libffi-dev libssl-dev;
+          apt-get install -y --no-install-recommends curl unzip ffmpeg gcc python3-dev libffi-dev libssl-dev nodejs chromium chromium-driver;
 
       fi;
 
